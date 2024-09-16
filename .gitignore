@@ -1,0 +1,46 @@
+# Gradle / Build
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.vscode/
+
+# Local config & signing
+local.properties
+*.jks
+*.keystore
+*.keystore.properties
+
+# NDK / External build
+.externalNativeBuild/
+.cxx/
+
+# Firebase config
+app/google-services.json
+
+# Artifacts
+*.apk
+*.aab
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local JDK cache used for CLI builds
+.jdk/
+
+# Python 캐시
+__pycache__/
+*.pyc
+
+# Firebase 서비스 계정 (절대 올리지 말 것)
+serviceAccount.json
+
+# 기밀 PDF(필요하다면 특정 파일만 명시)
+└═╕φ_╗≤┤π_╕▐╜┼└·_╟┴╖╬┴º╞«_┴ª╛╚╝¡.pdf
+
+# 기타 불필요한 루트 파일 (CON이 의미 없는 파일이면)
+CON
