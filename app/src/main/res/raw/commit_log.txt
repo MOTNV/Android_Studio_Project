@@ -1,1 +1,2 @@
 ﻿01. chore: init cleanup pass
+02. fix: adjust resource links
