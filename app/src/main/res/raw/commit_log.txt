@@ -1,3 +1,4 @@
 ﻿01. chore: init cleanup pass
 02. fix: adjust resource links
 03. chore: layout margin tune
+04. refactor: simplify adapters
