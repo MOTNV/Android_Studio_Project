@@ -38,7 +38,10 @@
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvMenuTitle" /> -->
-
+        <TextView
+            android:id="@+id/hello"
+            android:text="wellcome"
+            >
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Menu Items -->
