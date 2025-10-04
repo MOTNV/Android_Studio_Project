@@ -4,3 +4,4 @@
 04. refactor: simplify adapters
 05. feat: stub menu entries
 06. chore: update gradle hints
+07. fix: spacing on settings
