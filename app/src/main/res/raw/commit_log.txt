@@ -5,3 +5,4 @@
 05. feat: stub menu entries
 06. chore: update gradle hints
 07. fix: spacing on settings
+08. refactor: split utils logging
