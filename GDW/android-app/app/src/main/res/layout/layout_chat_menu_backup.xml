@@ -42,6 +42,32 @@
             android:id="@+id/hello"
             android:text="wellcome"
             >
+        <TextView
+            android:id="@+id/historyStaff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:textColor="@color/primaryColor"
+            android:textStyle="bold"
+            tools:text="김은별 교수" />
+
+        <TextView
+            android:id="@+id/historyTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:textColor="@color/secondaryText"
+            tools:text="2024-07-03 · 14:20" />
+
+        <TextView
+            android:id="@+id/historySummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            android:textColor="@color/primaryText"
+            tools:text="학업 스트레스로 인한 불안을 공유하고 과제 계획을 세웠습니다." />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Menu Items -->
