@@ -50,44 +50,7 @@
             tools:text="학업 스트레스로 인한 불안을 공유하고 과제 계획을 세웠습니다." />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Menu Items -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/footerLayout"
-        app:layout_constraintTop_toBottomOf="@+id/headerLayout">
-
-        <!-- Notification Setting -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:paddingVertical="12dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_history_24"
-                app:tint="#4B5563"
-                tools:ignore="ContentDescription" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_weight="1"
-                android:text="알림 설정"
-                android:textColor="#374151"
-                android:textSize="16sp" />
-
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switchNotifications"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true" />
-        </LinearLayout>
+    
 
         <View
             android:layout_width="match_parent"
