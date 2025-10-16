@@ -9,3 +9,4 @@
 09. chore: add placeholder assets
 10. fix: correct toolbar title
 11. chore: stub notification flow
+12. refactor: move constants
