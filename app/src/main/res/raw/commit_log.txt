@@ -10,3 +10,4 @@
 10. fix: correct toolbar title
 11. chore: stub notification flow
 12. refactor: move constants
+13. chore: tidy xml qualifiers
