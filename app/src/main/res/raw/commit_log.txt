@@ -11,3 +11,4 @@
 11. chore: stub notification flow
 12. refactor: move constants
 13. chore: tidy xml qualifiers
+14. fix: adjust list paddings
