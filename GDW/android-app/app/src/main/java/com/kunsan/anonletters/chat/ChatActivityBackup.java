@@ -104,68 +104,7 @@ public class ChatActivityBackup extends AppCompatActivity {
                 CryptoManager cryptoManager = CryptoManager.getInstance();
                 String currentUserId = viewModel.getCurrentUserId();
 
-                for (DocumentSnapshot doc : value) {
-                    Message message = doc.toObject(Message.class);
-                    if (message != null) {
-                        String decryptedText = "Decryption Failed";
-                        try {
-                            // 1. Decrypt AES Key using Private Key
-                            PrivateKey privateKey = cryptoManager.getRSAPrivateKey();
-                            if (privateKey != null && message.getEncryptedAESKey() != null) {
-                                SecretKey aesKey = cryptoManager.decryptAESKey(message.getEncryptedAESKey(), privateKey);
-                                // 2. Decrypt Content using AES Key
-                                decryptedText = cryptoManager.decryptMessage(message.getText(), aesKey);
-                            } else {
-                                // Fallback for messages sent by me (if I don't have my own encrypted key stored, 
-                                // which I should have in a real scenario, or if I stored it differently).
-                                // For this demo, if I sent it, I might have stored it differently or I can't decrypt it 
-                                // if I didn't encrypt it for myself properly.
-                                // BUT, in ChatRepository.sendConsultationRequest, we encrypted it for the recipient.
-                                // If I am the sender, I can't decrypt it unless I also encrypted it for myself!
-                                // Wait, the requirement says "Save to Room DB". Room DB has it.
-                                // But here we are reading from Firestore.
-                                // If I am the sender, I should read from Room?
-                                // Or, for simplicity, let's assume I can decrypt it or show "Sent Message" placeholder if key missing.
-                                // Actually, for the demo, let's just try to decrypt.
-                                // If it fails, show raw or placeholder.
-                                
-                                // CRITICAL FIX: The current implementation encrypts for the RECIPIENT.
-                                // The SENDER cannot decrypt the message from Firestore unless they also encrypted it for themselves.
-                                // However, the sender has the message in Room DB (which we are not using here, we are using Firestore listener).
-                                // For the purpose of this "Fix", if I am the sender, I will display "Encrypted Message" 
-                                // or try to find a workaround.
-                                // Ideally, we should use Room for display.
-                                // But let's stick to the plan: Decrypt what we can.
-                                
-                                // If I am the sender, I don't have the private key of the recipient!
-                                // So I cannot decrypt my own sent messages from Firestore if they are only encrypted for the recipient.
-                                // This is a known design constraint of simple E2EE.
-                                // Usually, you encrypt a copy for yourself (sender) or store the plain text locally.
-                                // Since we save to Room locally, we should use Room.
-                                // BUT, the user asked to fix the "garbled text".
-                                // If I am the sender, I should see my own text.
-                                // Let's assume for now we only care about RECEIVED messages being decrypted.
-                                // For SENT messages, if we can't decrypt, we show "보낸 메시지 (암호화됨)".
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Decryption error", e);
-                            decryptedText = "메시지 암호화 오류";
-                        }
-                        
-                        // If I am the sender, and I can't decrypt it (because I don't have the key), 
-                        // I should ideally show the local version.
-                        // But here we are iterating Firestore docs.
-                        // Let's just show the decrypted text if successful, or a placeholder.
-                        
-                        boolean isSentByMe = message.getSenderId() != null && message.getSenderId().equals(currentUserId);
-                        
-                        // Hack for demo: If I am sender, I might have saved it in Room.
-                        // But connecting Room here is complex.
-                        // Let's just show what we have.
-                        
-                        chatMessages.add(new ChatMessage(decryptedText, isSentByMe, message.getTimestamp()));
-                    }
-                }
+                
                 adapter.setMessages(chatMessages);
                 recyclerView.scrollToPosition(chatMessages.size() - 1);
             }
