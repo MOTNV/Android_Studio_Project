@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#0073FF</color>
+    <color name="primaryVariant">#005BD1</color>
+    <color name="background">#F7F8FA</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="onSurface">#111827</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="subtleText">#6B7280</color>
+    <color name="chipPrimary">#E8F1FF</color>
+    <color name="chipNeutral">#F1F3F5</color>
+    <color name="chipAccent">#E9F2FF</color>
+    <color name="chipBorder">#D8DEE6</color>
+    <color name="bubbleOutgoing">#0073FF</color>
+    <color name="bubbleIncoming">#E9F2FF</color>
+</resources>
