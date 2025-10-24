@@ -112,60 +112,7 @@ public class ChatActivityBackup extends AppCompatActivity {
     }
 
 
-    // START of Menu Implementation
     
-    @Override
-    public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        // Programmatically adding a menu item to avoid creating a new XML file
-        // ID: 1, Order: 0, Title: "Menu"
-        android.view.MenuItem menuItem = menu.add(0, 1, 0, "메뉴");
-        menuItem.setIcon(R.drawable.ic_person_24); // Using an existing drawable as a placeholder for a menu icon
-        menuItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == 1) {
-            showChatMenu();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void showChatMenu() {
-        try {
-            // Inflate the backup menu layout
-            android.view.LayoutInflater inflater = (android.view.LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-            View menuView = inflater.inflate(R.layout.layout_chat_menu_backup, null);
-
-            // Create PopupWindow
-            // Width: 300dp (approx 80% screen width usually, or fixed), Height: Match Parent
-            int width = (int) (300 * getResources().getDisplayMetrics().density); 
-            final android.widget.PopupWindow popupWindow = new android.widget.PopupWindow(
-                    menuView,
-                    width,
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    true
-            );
-
-            // Set background to allow outside touch to dismiss (though Focusable=true handles most)
-            popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0xFFFFFFFF));
-            popupWindow.setElevation(20);
-
-            // Animation (Optional, using default for now or simply appearing)
-            
-            // Show at the end (Right side)
-            popupWindow.showAtLocation(findViewById(R.id.toolbar), android.view.Gravity.END, 0, 0);
-
-            // Initialize Menu Items
-            initMenuItems(menuView, popupWindow);
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error showing chat menu", e);
-            Toast.makeText(this, "메뉴를 열 수 없습니다.", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     private void initMenuItems(View menuView, final android.widget.PopupWindow popupWindow) {
         // 1. Notifications Switch
