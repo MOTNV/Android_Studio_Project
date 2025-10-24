@@ -12,3 +12,4 @@
 12. refactor: move constants
 13. chore: tidy xml qualifiers
 14. fix: adjust list paddings
+15. chore: add lint suppress notes
