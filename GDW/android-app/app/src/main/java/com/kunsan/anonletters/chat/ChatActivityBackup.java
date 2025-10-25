@@ -110,39 +110,6 @@ public class ChatActivityBackup extends AppCompatActivity {
             }
         });
     }
-
-
-    
-
-    private void initMenuItems(View menuView, final android.widget.PopupWindow popupWindow) {
-        // 1. Notifications Switch
-        com.google.android.material.switchmaterial.SwitchMaterial switchNotifications = 
-                menuView.findViewById(R.id.switchNotifications);
-        if (switchNotifications != null) {
-            switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                String status = isChecked ? "켜짐" : "꺼짐";
-                Toast.makeText(ChatActivityBackup.this, "알림이 " + status + "으로 설정되었습니다.", Toast.LENGTH_SHORT).show();
-            });
-        }
-
-        // 2. Files Button
-        View btnFiles = menuView.findViewById(R.id.btnFiles);
-        if (btnFiles != null) {
-            btnFiles.setOnClickListener(v -> 
-                Toast.makeText(ChatActivityBackup.this, "파일 보관함 기능은 준비 중입니다.", Toast.LENGTH_SHORT).show()
-            );
-        }
-
-        // 3. Leave Chat Button
-        View btnLeaveChat = menuView.findViewById(R.id.btnLeaveChat);
-        if (btnLeaveChat != null) {
-            btnLeaveChat.setOnClickListener(v -> {
-                popupWindow.dismiss();
-                confirmLeaveChat();
-            });
-        }
-    }
-
     private void confirmLeaveChat() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("채팅방 나가기")
