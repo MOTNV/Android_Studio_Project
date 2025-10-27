@@ -110,18 +110,5 @@ public class ChatActivityBackup extends AppCompatActivity {
             }
         });
     }
-    private void confirmLeaveChat() {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("채팅방 나가기")
-                .setMessage("정말로 채팅방을 나가시겠습니까? 대화 내용이 삭제됩니다.")
-                .setPositiveButton("나가기", (dialog, which) -> {
-                    Toast.makeText(ChatActivityBackup.this, "채팅방을 나갔습니다.", Toast.LENGTH_SHORT).show();
-                    finish(); // Close the activity
-                })
-                .setNegativeButton("취소", null)
-                .show();
-    }
-    // END of Menu Implementation
-
-    // showRecipientSelectionDialog removed
+   
 }
