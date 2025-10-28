@@ -35,48 +35,7 @@ public class ChatActivityBackup extends AppCompatActivity {
     private EditText editTextMessage;
     private ImageButton buttonSend;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat);
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("상담 채팅");
-        }
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
-        viewModel = new ViewModelProvider(this).get(ChatViewModel.class);
-
-        recyclerView = findViewById(R.id.recyclerViewMessages);
-        editTextMessage = findViewById(R.id.editTextMessage);
-        buttonSend = findViewById(R.id.buttonSend);
-
-        adapter = new ChatAdapter(viewModel.getCurrentUserId());
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
-
-        buttonSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String text = editTextMessage.getText().toString();
-                if (!text.isEmpty()) {
-                    // Direct send to the current recipient (passed via Intent or default)
-                    // For now, we default to "상담사" or get from Intent if we had logic for that.
-                    // Since ChatActivity is now just a chat room, we assume the session is established.
-                    // But we need a recipientId.
-                    // Let's get it from Intent.
-                    String recipientId = getIntent().getStringExtra("recipientId");
-                    if (recipientId == null) recipientId = "상담사"; // Fallback
-                    
-                    viewModel.send(text, recipientId);
-                    editTextMessage.setText("");
-                }
-            }
-        });
-
+   
         // Analysis result observation removed as it's handled in ConsultationRequestActivity
 
         // Observe Sending State
