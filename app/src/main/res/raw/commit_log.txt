@@ -14,3 +14,4 @@
 14. fix: adjust list paddings
 15. chore: add lint suppress notes
 16. refactor: extract view logic
+17. chore: trim dead strings
