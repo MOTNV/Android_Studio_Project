@@ -51,23 +51,7 @@ public class ChatActivityBackup extends AppCompatActivity {
             }
         });
 
-        viewModel.getMessagesQuery().addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (error != null) {
-                    Log.e(TAG, "Listen failed.", error);
-                    return;
-                }
-
-                List<ChatMessage> chatMessages = new ArrayList<>();
-                CryptoManager cryptoManager = CryptoManager.getInstance();
-                String currentUserId = viewModel.getCurrentUserId();
-
-                
-                adapter.setMessages(chatMessages);
-                recyclerView.scrollToPosition(chatMessages.size() - 1);
-            }
-        });
+        
     }
    
 }
