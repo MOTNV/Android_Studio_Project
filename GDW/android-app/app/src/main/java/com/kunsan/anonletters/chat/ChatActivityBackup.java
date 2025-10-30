@@ -36,22 +36,6 @@ public class ChatActivityBackup extends AppCompatActivity {
     private ImageButton buttonSend;
 
    
-        // Analysis result observation removed as it's handled in ConsultationRequestActivity
-
-        // Observe Sending State
-        viewModel.getIsSending().observe(this, isSending -> {
-            buttonSend.setEnabled(!isSending);
-            // Show/Hide progress bar if available
-        });
-
-        // Observe Error
-        viewModel.getError().observe(this, errorMsg -> {
-            if (errorMsg != null) {
-                Toast.makeText(ChatActivityBackup.this, "Error: " + errorMsg, Toast.LENGTH_SHORT).show();
-            }
-        });
-
         
-    }
    
 }
