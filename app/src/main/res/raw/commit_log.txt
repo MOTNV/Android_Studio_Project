@@ -15,3 +15,4 @@
 15. chore: add lint suppress notes
 16. refactor: extract view logic
 17. chore: trim dead strings
+18. fix: align button states
