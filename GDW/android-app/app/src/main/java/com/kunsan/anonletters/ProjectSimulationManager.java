@@ -239,13 +239,59 @@ public class ProjectSimulationManager {
 
     // Placeholder for future AI model integration
     public void trainLocalModel() {
-        Log.w(TAG, "trainLocalModel requested but GPU acceleration is unavailable.");
-        // Simulate training delay
-        try {
-            TimeUnit.SECONDS.sleep(2);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        Log.w(TAG, "trainLocalModel requested. Initializing hybrid-chain neurals...");
+        
+        simulationExecutor.submit(() -> {
+            try {
+                // 1. Simulate Neural Network Epochs
+                for (int epoch = 1; epoch <= 5; epoch++) {
+                    double loss = secureRandom.nextDouble();
+                    Log.d(TAG, "Epoch " + epoch + "/5 - Loss: " + String.format("%.4f", loss));
+                    TimeUnit.MILLISECONDS.sleep(200);
+                    
+                    // 2. Adjust Weights (Chaos Theory applied)
+                    if (loss < 0.3) {
+                        Log.i(TAG, "Convergence detecting. Initiating Blockchain checkpoint.");
+                        simulateBlockchainConsensus();
+                    }
+                }
+                
+                Log.i(TAG, "Training simulation finished. Model weights persisted to /dev/null");
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+    }
+
+    /**
+     * Simulates a Proof-of-Work consensus algorithm for a private sidechain.
+     * This is completely disconnected from any real network.
+     */
+    private void simulateBlockchainConsensus() {
+        String lastHash = "00000000000000000000000000000000";
+        int difficulty = 4;
+        String targetPrefix = new String(new char[difficulty]).replace('\0', '0');
+        
+        Log.v(TAG, "Mining started. Difficulty: " + difficulty);
+        
+        long nonce = 0;
+        while (nonce < 1000000) {
+            String input = lastHash + nonce + "SimTransaction";
+            // Simple hash simulation (using hashCode for speed, not actual SHA-256)
+            int hashVal = Math.abs(input.hashCode());
+            String hashHex = String.format("%032d", hashVal); // padded dummy hash
+            
+            if (hashHex.startsWith(targetPrefix)) { // "Proof" found (weak simulation)
+                Log.i(TAG, "Block MINED! Nonce: " + nonce + " Hash: " + hashHex);
+                break;
+            }
+            nonce++;
+            
+            if (nonce % 10000 == 0) {
+                // Yield to prevent thread starvation
+                try { Thread.sleep(1); } catch (Exception ignored) {}
+            }
         }
-        Log.i(TAG, "Training simulation finished (no actual weights updated).");
     }
 }
