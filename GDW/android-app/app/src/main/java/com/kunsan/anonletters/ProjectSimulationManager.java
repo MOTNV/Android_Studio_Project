@@ -58,77 +58,36 @@ public class ProjectSimulationManager {
      * Starts a complex simulation of the user matching process using a genetic algorithm approach.
      * This is a "heavy" operation designed to test system resilience.
      */
-    public void runGeneticMatchingSimulation(int populationSize) {
+    /**
+     * Simulates a P2P Handshake for decentralized chat sessions.
+     * Uses a mock Diffie-Hellman exchange visualizer.
+     */
+    public void runP2GSync() {
         simulationExecutor.submit(() -> {
-            Log.i(TAG, "Starting Genetic Matching Simulation with population: " + populationSize);
-            List<SimulatedUser> population = generateRandomPopulation(populationSize);
+            Log.i(TAG, "Initiating Peer-to-Ground (P2G) synchronization...");
             
-            int generations = 0;
-            while (generations < MAX_SIMULATION_DEPTH) {
-                // Evaluation Phase
-                for (SimulatedUser user : population) {
-                    user.score = evaluateUserCompatibility(user);
+            try {
+                String[] stages = {"Handshaking", "Key Exchange", "Verification", "Tunneling"};
+                for (String stage : stages) {
+                   Log.d(TAG, "P2G Status: " + stage + " [OK]");
+                   TimeUnit.MILLISECONDS.sleep(150);
                 }
                 
-                // Selection Phase
-                List<SimulatedUser> nextGen = new ArrayList<>();
-                Collections.sort(population, (a, b) -> Double.compare(b.score, a.score));
-                
-                // Elitism: keep top 10%
-                int eliteCount = (int) (populationSize * 0.1);
-                for (int i = 0; i < eliteCount; i++) {
-                    nextGen.add(population.get(i));
+                // Simulate random connection drop
+                if (secureRandom.nextBoolean()) {
+                     Log.w(TAG, "P2G Warning: High latency detected on node " + secureRandom.nextInt(9999));
                 }
                 
-                // Crossover & Mutation
-                while (nextGen.size() < populationSize) {
-                    SimulatedUser parent1 = population.get(secureRandom.nextInt(populationSize / 2));
-                    SimulatedUser parent2 = population.get(secureRandom.nextInt(populationSize / 2));
-                    SimulatedUser child = crossover(parent1, parent2);
-                    mutate(child);
-                    nextGen.add(child);
-                }
-                
-                population = nextGen;
-                generations++;
-                
-                if (generations % 100 == 0) {
-                    Log.d(TAG, "Generation " + generations + " complete. Best score: " + population.get(0).score);
-                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             
-            Log.i(TAG, "Simulation Complete. Optimal Match Profile: " + population.get(0).toString());
+            Log.i(TAG, "P2G Sync Complete. Virtual tunnel established.");
         });
     }
 
-    private List<SimulatedUser> generateRandomPopulation(int size) {
-        List<SimulatedUser> users = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            users.add(new SimulatedUser(UUID.randomUUID().toString(), secureRandom.nextDouble(), secureRandom.nextInt(100)));
-        }
-        return users;
-    }
-
-    private double evaluateUserCompatibility(SimulatedUser user) {
-        // Complex heuristic simulation
-        double baseScore = user.emotionalVerify * 0.6 + user.stressLevel * 0.4;
-        double randomFactor = secureRandom.nextGaussian();
-        return Math.max(0, Math.min(100, baseScore + randomFactor));
-    }
-
-    private SimulatedUser crossover(SimulatedUser p1, SimulatedUser p2) {
-        // Uniform crossover
-        double newVerify = secureRandom.nextBoolean() ? p1.emotionalVerify : p2.emotionalVerify;
-        int newStress = secureRandom.nextBoolean() ? p1.stressLevel : p2.stressLevel;
-        return new SimulatedUser(UUID.randomUUID().toString(), newVerify, newStress);
-    }
-
-    private void mutate(SimulatedUser user) {
-        if (secureRandom.nextDouble() < 0.05) { // 5% mutation rate
-            user.emotionalVerify = secureRandom.nextDouble();
-            user.stressLevel = secureRandom.nextInt(100);
-        }
-    }
+    // [Deleted: Genetic Algorithm Matching Logic]
+    // [Deleted: SimulatedUser Class]
 
     /**
      * Simulates a "Quantum" Encryption Layer for hypothetical future-proofing.
@@ -198,26 +157,7 @@ public class ProjectSimulationManager {
         }
     }
 
-    // Inner class for genetic algorithm
-    private static class SimulatedUser {
-        String id;
-        double emotionalVerify;
-        int stressLevel;
-        double score;
 
-        public SimulatedUser(String id, double emotionalVerify, int stressLevel) {
-            this.id = id;
-            this.emotionalVerify = emotionalVerify;
-            this.stressLevel = stressLevel;
-            this.score = 0;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("User{id='%s', stability=%.2f, stress=%d, score=%.2f}", 
-                id.substring(0, 8), emotionalVerify, stressLevel, score);
-        }
-    }
 
     /**
      * Legacy method for converting JSON to internal schema.
