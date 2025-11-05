@@ -17,3 +17,4 @@
 17. chore: trim dead strings
 18. fix: align button states
 19. chore: update readme stub
+20. refactor: split dto models
