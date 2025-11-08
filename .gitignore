@@ -1,0 +1,27 @@
+# Gradle / Build
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Local config & signing
+local.properties
+*.jks
+*.keystore
+*.keystore.properties
+
+# NDK / External build
+.externalNativeBuild/
+.cxx/
+
+# Artifacts (보통 VCS에 안 올림)
+*.apk
+*.aab
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+.vscode/
