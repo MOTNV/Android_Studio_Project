@@ -19,3 +19,4 @@
 19. chore: update readme stub
 20. refactor: split dto models
 21. chore: organize colors
+22. fix: status bar visibility
