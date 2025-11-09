@@ -6,6 +6,7 @@
 # Android Studio / IntelliJ
 .idea/
 *.iml
+.vscode/
 
 # Local config & signing
 local.properties
@@ -17,11 +18,13 @@ local.properties
 .externalNativeBuild/
 .cxx/
 
-# Artifacts (보통 VCS에 안 올림)
+# Artifacts
 *.apk
 *.aab
 
-# OS / 편집기
+# OS files
 .DS_Store
 Thumbs.db
-.vscode/
+
+# Local JDK cache used for CLI builds
+.jdk/
