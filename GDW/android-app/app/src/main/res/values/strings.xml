@@ -3,6 +3,7 @@
     <string name="app_name">AnonLetters</string>
     <string name="main_title">마음의 소리</string>
     <string name="main_subtitle">익명으로 상담하고 블록체인으로 무결성을 보장하세요.</string>
+    <string name="main_illustration_desc">상담 안내 일러스트</string>
     <string name="consult_button_label">상담하기</string>
     <string name="history_button_label">상담 내역 확인하기</string>
     <string name="status_title">기기 상태</string>
