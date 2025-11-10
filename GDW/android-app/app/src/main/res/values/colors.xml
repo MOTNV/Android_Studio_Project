@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryColor">#0F172A</color>
+    <color name="primaryVariant">#1D4ED8</color>
+    <color name="secondaryText">#475569</color>
+    <color name="primaryText">#0F172A</color>
+    <color name="white">#FFFFFF</color>
+    <color name="surfaceSoft">#F8FAFC</color>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AnonLetters</string>
+    <string name="main_title">마음의 소리</string>
+    <string name="main_subtitle">익명으로 상담하고 블록체인으로 무결성을 보장하세요.</string>
+    <string name="consult_button_label">상담하기</string>
+    <string name="history_button_label">상담 내역 확인하기</string>
+    <string name="status_title">기기 상태</string>
+    <string name="status_body_default">현재 기기는 차단 없이 안전하게 상담을 진행할 수 있습니다.</string>
+    <string name="status_hint">PoW와 기기 토큰으로 악성 사용자를 차단합니다.</string>
+    <string name="staff_list_title">상담 센터</string>
+    <string name="history_list_title">상담 내역</string>
+    <string name="history_empty_message">아직 상담 내역이 없습니다.</string>
+    <string name="chat_placeholder">"%1$s" 님과의 1:1 채팅 화면을 준비 중입니다.</string>
+</resources>
