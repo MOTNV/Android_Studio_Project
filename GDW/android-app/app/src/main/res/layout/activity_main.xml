@@ -4,45 +4,148 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_main_gradient"
-    android:padding="24dp"
+    android:background="@color/surfaceSoft"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/projectTitle"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/main_title"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
-        android:textColor="@color/white"
-        android:textStyle="bold"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/surfaceSoft"
+        android:elevation="0dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:text="@string/main_title" />
+        app:title="@string/main_title"
+        app:titleCentered="true"
+        app:titleTextColor="@color/primaryColor" />
 
+    <!-- 메인 이미지 -->
+    <ImageView
+        android:id="@+id/mainIllustration"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_marginTop="8dp"
+        android:src="@drawable/ic_main_illustration"
+        android:contentDescription="@string/main_illustration_desc"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 서브타이틀 -->
     <TextView
         android:id="@+id/projectSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
         android:layout_marginTop="8dp"
         android:text="@string/main_subtitle"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-        android:textColor="#E2E8F0"
-        app:layout_constraintTop_toBottomOf="@id/projectTitle"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textColor="@color/secondaryText"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/mainIllustration"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="@string/main_subtitle" />
 
+    <!-- 24/7 & 100% 비밀보장 카드 -->
+    <LinearLayout
+        android:id="@+id/quickTipsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/projectSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="24/7"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:textColor="@color/primaryColor"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="언제든지"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/secondaryText" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="100%"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:textColor="@color/primaryColor"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="비밀보장"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/secondaryText" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <!-- 상태 카드 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/insightCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        app:cardElevation="0dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="16dp"
+        app:cardElevation="2dp"
         app:cardBackgroundColor="@color/white"
-        app:cardCornerRadius="24dp"
-        app:layout_constraintTop_toBottomOf="@id/projectSubtitle"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintTop_toBottomOf="@id/quickTipsContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -50,14 +153,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/statusTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/status_title"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:textColor="@color/primaryColor"
                 android:textStyle="bold" />
 
@@ -67,61 +170,69 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/status_body_default"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                android:textColor="@color/secondaryText" />
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                android:textColor="@color/secondaryText"
+                android:lineSpacingExtra="2dp" />
 
             <TextView
                 android:id="@+id/statusHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/status_hint"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                 android:textColor="@color/secondaryText" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- 상담 시작 버튼 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/consultButton"
         style="@style/Widget.MaterialComponents.Button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:layout_marginBottom="12dp"
-        android:minHeight="64dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="8dp"
+        android:minHeight="54dp"
         android:text="@string/consult_button_label"
         android:textAllCaps="false"
-        android:textSize="18sp"
-        app:cornerRadius="18dp"
-        app:iconPadding="16dp"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        app:iconPadding="12dp"
         app:icon="@drawable/ic_chat_bubble_24"
         app:iconGravity="textStart"
         app:iconTint="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/insightCard"
+        app:layout_constraintBottom_toTopOf="@id/historyButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="@string/consult_button_label" />
 
+    <!-- 상담 내역 버튼 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/historyButton"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:minHeight="64dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="20dp"
+        android:minHeight="54dp"
         android:text="@string/history_button_label"
         android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        app:borderWidth="1dp"
-        app:cornerRadius="18dp"
-        app:iconPadding="16dp"
+        android:textColor="@color/primaryColor"
+        android:textSize="16sp"
+        app:strokeColor="@color/primaryColor"
+        app:strokeWidth="1dp"
+        app:cornerRadius="12dp"
+        app:iconPadding="12dp"
         app:icon="@drawable/ic_history_24"
         app:iconGravity="textStart"
-        app:iconTint="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/consultButton"
+        app:iconTint="@color/primaryColor"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="@string/history_button_label" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
