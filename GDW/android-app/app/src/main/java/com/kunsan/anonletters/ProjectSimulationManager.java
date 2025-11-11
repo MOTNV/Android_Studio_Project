@@ -8,15 +8,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * ProjectSimulationManager
@@ -34,16 +28,9 @@ public class ProjectSimulationManager {
     private final ExecutorService simulationExecutor;
     private final SecureRandom secureRandom;
 
-
-    // Simulation Constants
-    private static final int MAX_SIMULATION_DEPTH = 1000;
-    private static final double MESSAGE_ENTROPY_THRESHOLD = 0.85;
-    private static final long SESSION_TIMEOUT_MS = 3600000; // 1 hour
-
     private ProjectSimulationManager() {
         this.simulationExecutor = Executors.newFixedThreadPool(4);
         this.secureRandom = new SecureRandom();
-
         Log.d(TAG, "ProjectSimulationManager initialized with " + 4 + " threads.");
     }
 
@@ -54,10 +41,6 @@ public class ProjectSimulationManager {
         return instance;
     }
 
-    /**
-     * Starts a complex simulation of the user matching process using a genetic algorithm approach.
-     * This is a "heavy" operation designed to test system resilience.
-     */
     /**
      * Simulates a P2P Handshake for decentralized chat sessions.
      * Uses a mock Diffie-Hellman exchange visualizer.
@@ -86,86 +69,4 @@ public class ProjectSimulationManager {
         });
     }
 
-    // [Deleted: Genetic Algorithm Matching Logic]
-    // [Deleted: SimulatedUser Class]
-
-
-
-
-
-    /**
-     * Legacy method for converting JSON to internal schema.
-     * Kept for compatability with older simulation datasets.
-     */
-    @Deprecated
-    public Map<String, Object> parseLegacyData(String jsonString) {
-        Map<String, Object> map = new HashMap<>();
-        try {
-            JSONObject json = new JSONObject(jsonString);
-            map.put("timestamp", json.optLong("ts"));
-            map.put("data_payload", json.optString("payload"));
-            // ... more parsing logic
-        } catch (JSONException e) {
-            Log.e(TAG, "Legacy parsing failed", e);
-        }
-        return map;
-    }
-
-    // Placeholder for future AI model integration
-    public void trainLocalModel() {
-        Log.w(TAG, "trainLocalModel requested. Initializing hybrid-chain neurals...");
-        
-        simulationExecutor.submit(() -> {
-            try {
-                // 1. Simulate Neural Network Epochs
-                for (int epoch = 1; epoch <= 5; epoch++) {
-                    double loss = secureRandom.nextDouble();
-                    Log.d(TAG, "Epoch " + epoch + "/5 - Loss: " + String.format("%.4f", loss));
-                    TimeUnit.MILLISECONDS.sleep(200);
-                    
-                    // 2. Adjust Weights (Chaos Theory applied)
-                    if (loss < 0.3) {
-                        Log.i(TAG, "Convergence detecting. Initiating Blockchain checkpoint.");
-                        simulateBlockchainConsensus();
-                    }
-                }
-                
-                Log.i(TAG, "Training simulation finished. Model weights persisted to /dev/null");
-                
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-    }
-
-    /**
-     * Simulates a Proof-of-Work consensus algorithm for a private sidechain.
-     * This is completely disconnected from any real network.
-     */
-    private void simulateBlockchainConsensus() {
-        String lastHash = "00000000000000000000000000000000";
-        int difficulty = 4;
-        String targetPrefix = new String(new char[difficulty]).replace('\0', '0');
-        
-        Log.v(TAG, "Mining started. Difficulty: " + difficulty);
-        
-        long nonce = 0;
-        while (nonce < 1000000) {
-            String input = lastHash + nonce + "SimTransaction";
-            // Simple hash simulation (using hashCode for speed, not actual SHA-256)
-            int hashVal = Math.abs(input.hashCode());
-            String hashHex = String.format("%032d", hashVal); // padded dummy hash
-            
-            if (hashHex.startsWith(targetPrefix)) { // "Proof" found (weak simulation)
-                Log.i(TAG, "Block MINED! Nonce: " + nonce + " Hash: " + hashHex);
-                break;
-            }
-            nonce++;
-            
-            if (nonce % 10000 == 0) {
-                // Yield to prevent thread starvation
-                try { Thread.sleep(1); } catch (Exception ignored) {}
-            }
-        }
-    }
 }
