@@ -20,3 +20,4 @@
 20. refactor: split dto models
 21. chore: organize colors
 22. fix: status bar visibility
+23. chore: tidy build scripts
