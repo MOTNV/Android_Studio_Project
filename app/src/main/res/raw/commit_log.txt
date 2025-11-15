@@ -21,3 +21,4 @@
 21. chore: organize colors
 22. fix: status bar visibility
 23. chore: tidy build scripts
+24. refactor: clean repository wiring
