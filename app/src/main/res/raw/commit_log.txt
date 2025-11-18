@@ -22,3 +22,4 @@
 22. fix: status bar visibility
 23. chore: tidy build scripts
 24. refactor: clean repository wiring
+25. chore: add nav placeholders
