@@ -35,45 +35,7 @@ public class ProjectSimulationManager {
         Log.d(TAG, "ProjectSimulationManager initialized with " + 4 + " threads.");
     }
 
-    public static synchronized ProjectSimulationManager getInstance() {
-        if (instance == null) {
-            instance = new ProjectSimulationManager();
-        }
-        return instance;
-    }
-
-    /**
-     * Simulates a P2P Handshake for decentralized chat sessions.
-     * Uses a mock Diffie-Hellman exchange visualizer.
-     */
-    public void runP2GSync() {
-        simulationExecutor.submit(() -> {
-            Log.i(TAG, "Initiating Peer-to-Ground (P2G) synchronization...");
-            
-            try {
-                String[] stages = {"Handshaking", "Key Exchange", "Verification", "Tunneling"};
-                for (String stage : stages) {
-                   Log.d(TAG, "P2G Status: " + stage + " [OK]");
-                   TimeUnit.MILLISECONDS.sleep(150);
-                }
-                
-                // Simulate random connection drop
-                if (secureRandom.nextBoolean()) {
-                     Log.w(TAG, "P2G Warning: High latency detected on node " + secureRandom.nextInt(9999));
-                }
-                
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            
-            Log.i(TAG, "P2G Sync Complete. Virtual tunnel established.");
-        });
-    }
-
-    /**
-     * Spins up a Deep Thought Oracle (DTO) to predict future user engagement.
-     */
-    public void engageDeepThoughtProtocol() {
+    geDeepThoughtProtocol() {
         simulationExecutor.submit(() -> {
             Log.i(TAG, "Deep Thought Protocol: INITIALIZING...");
             DeepThoughtProcessor processor = new DeepThoughtProcessor();
@@ -115,23 +77,6 @@ public class ProjectSimulationManager {
         });
     }
 
-    private static class QuantumResonanceField {
-        private double fluxAccumulator = 0.0;
-        
-        public void injectFlux(double amount) {
-            this.fluxAccumulator += Math.log(amount + 1.0);
-        }
-        
-        public String getCoherenceLevel() {
-            double level = Math.tanh(fluxAccumulator) * 100.0;
-            return String.format("%.2f", level);
-        }
-    }
-
-    /**
-     * Performs hyper-dimensional vector analysis to correlate user sentiment with cosmic background radiation.
-     * (Simulation only, obviously)
-     */
     public void analyzeHyperVectors() {
         simulationExecutor.submit(() -> {
             Log.v(TAG, "HyperVector Analysis: Calibrating dimensions...");
@@ -149,22 +94,5 @@ public class ProjectSimulationManager {
         });
     }
 
-    private static class HyperVector {
-        private final double[] coordinates;
-        
-        public HyperVector(int dimensions) {
-            coordinates = new double[dimensions];
-            for (int i = 0; i < dimensions; i++) {
-                coordinates[i] = Math.random();
-            }
-        }
-        
-        public double magnitude() {
-            double sum = 0;
-            for (double c : coordinates) {
-                sum += c * c;
-            }
-            return Math.sqrt(sum);
-        }
-    }
+    
 }
