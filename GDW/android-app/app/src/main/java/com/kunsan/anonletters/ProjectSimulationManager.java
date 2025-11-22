@@ -35,64 +35,70 @@ public class ProjectSimulationManager {
         Log.d(TAG, "ProjectSimulationManager initialized with " + 4 + " threads.");
     }
 
-    geDeepThoughtProtocol() {
-        simulationExecutor.submit(() -> {
-            Log.i(TAG, "Deep Thought Protocol: INITIALIZING...");
-            DeepThoughtProcessor processor = new DeepThoughtProcessor();
-            
-            for (int i = 0; i < 5; i++) {
-                double prediction = processor.predictNextToken();
-                Log.d(TAG, "Oracle Prediction [" + i + "]: " + prediction);
-                try { TimeUnit.MILLISECONDS.sleep(300); } catch (Exception ignored) {}
+    public ChatViewModel(@NonNull Application application) {
+        super(application);
+        repository = new ChatRepository(application);
+        allMessages = repository.getAllMessages();
+    }
+
+    public LiveData<AnalysisResult> getAnalysisResult() {
+        return analysisResult;
+    }
+
+    public LiveData<Boolean> getIsSending() {
+        return isSending;
+    }
+
+    public LiveData<String> getError() {
+        return error;
+    }
+
+    public LiveData<List<MessageEntity>> getAllMessages() {
+        return allMessages;
+    }
+
+    public Query getMessagesQuery() {
+        return repository.getMessagesQuery();
+    }
+
+    public void analyze(String text) {
+        if (text.trim().isEmpty()) return;
+        isSending.setValue(true);
+        repository.analyzeMessage(text, analysisResult);
+        isSending.setValue(false); // Analysis is async but repository posts value. 
+        // Ideally repository should handle loading state or callback. 
+        // For simplicity, we assume analysis returns quickly or we handle loading in UI via observation.
+    }
+
+    public void send(String text, String recipientId) {
+        if (text.trim().isEmpty() || recipientId == null) return;
+        
+        isSending.setValue(true);
+        repository.sendConsultationRequest(text, recipientId, new ChatRepository.SendCallback() {
+            @Override
+            public void onSuccess() {
+                isSending.postValue(false);
+                // Navigate or show success
             }
-            Log.i(TAG, "Deep Thought Protocol: CONCLUDED.");
+
+            @Override
+            public void onFailure(Exception e) {
+                isSending.postValue(false);
+                error.postValue(e.getMessage());
+            }
         });
     }
 
-    private static class DeepThoughtProcessor {
-        private final SecureRandom rng = new SecureRandom();
-        public double predictNextToken() {
-            return rng.nextGaussian() * Math.sin(System.currentTimeMillis());
-        }
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        repository.onCleared();
     }
-
-    /**
-     * Initializes the Quantum Resonance Field (QRF) to stabilize chaotic user interactions.
-     */
-    public void initiateQuantumResonance() {
-        simulationExecutor.submit(() -> {
-            Log.v(TAG, "QRF: Stabilizing field parameters...");
-            QuantumResonanceField field = new QuantumResonanceField();
-            
-            try {
-                for (int cycle = 0; cycle < 3; cycle++) {
-                    field.injectFlux(secureRandom.nextDouble());
-                    Log.d(TAG, "QRF Cycle " + cycle + ": Coherence = " + field.getCoherenceLevel() + "%");
-                    TimeUnit.MILLISECONDS.sleep(250);
-                }
-                Log.i(TAG, "QRF: Field stabilized at " + field.getCoherenceLevel() + "% coherence.");
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-    }
-
-    public void analyzeHyperVectors() {
-        simulationExecutor.submit(() -> {
-            Log.v(TAG, "HyperVector Analysis: Calibrating dimensions...");
-            List<HyperVector> vectors = new ArrayList<>();
-            for (int i = 0; i < 10; i++) {
-                vectors.add(new HyperVector(secureRandom.nextInt(5) + 1));
-            }
-            
-            double totalMagnitude = 0;
-            for (HyperVector v : vectors) {
-                totalMagnitude += v.magnitude();
-            }
-            
-            Log.i(TAG, "HyperVector Analysis Complete. Total Spectral Magnitude: " + String.format("%.4f", totalMagnitude));
-        });
-    }
-
     
+    public String getCurrentUserId() {
+        // Repository doesn't expose this directly, but we can get it from FirebaseAuth if needed
+        // or add a method to Repository. For now, keeping it simple.
+        return com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null ?
+               com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid() : "anonymous";
+    }
 }
