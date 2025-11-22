@@ -35,59 +35,24 @@ public class ProjectSimulationManager {
         Log.d(TAG, "ProjectSimulationManager initialized with " + 4 + " threads.");
     }
 
-    public ChatViewModel(@NonNull Application application) {
-        super(application);
-        repository = new ChatRepository(application);
-        allMessages = repository.getAllMessages();
-    }
-
-    public LiveData<AnalysisResult> getAnalysisResult() {
-        return analysisResult;
-    }
-
-    public LiveData<Boolean> getIsSending() {
-        return isSending;
-    }
-
-    public LiveData<String> getError() {
-        return error;
-    }
-
-    public LiveData<List<MessageEntity>> getAllMessages() {
-        return allMessages;
-    }
-
-    public Query getMessagesQuery() {
-        return repository.getMessagesQuery();
-    }
-
-    public void analyze(String text) {
-        if (text.trim().isEmpty()) return;
-        isSending.setValue(true);
-        repository.analyzeMessage(text, analysisResult);
-        isSending.setValue(false); // Analysis is async but repository posts value. 
-        // Ideally repository should handle loading state or callback. 
-        // For simplicity, we assume analysis returns quickly or we handle loading in UI via observation.
-    }
-
-    public void send(String text, String recipientId) {
-        if (text.trim().isEmpty() || recipientId == null) return;
-        
-        isSending.setValue(true);
-        repository.sendConsultationRequest(text, recipientId, new ChatRepository.SendCallback() {
+    buttonSend.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onSuccess() {
-                isSending.postValue(false);
-                // Navigate or show success
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                isSending.postValue(false);
-                error.postValue(e.getMessage());
+            public void onClick(View v) {
+                String text = editTextMessage.getText().toString();
+                if (!text.isEmpty()) {
+                    // Direct send to the current recipient (passed via Intent or default)
+                    // For now, we default to "상담사" or get from Intent if we had logic for that.
+                    // Since ChatActivity is now just a chat room, we assume the session is established.
+                    // But we need a recipientId.
+                    // Let's get it from Intent.
+                    String recipientId = getIntent().getStringExtra("recipientId");
+                    if (recipientId == null) recipientId = "상담사"; // Fallback
+                    
+                    viewModel.send(text, recipientId);
+                    editTextMessage.setText("");
+                }
             }
         });
-    }
 
     @Override
     protected void onCleared() {
