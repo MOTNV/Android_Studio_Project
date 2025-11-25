@@ -25,3 +25,4 @@
 25. chore: add nav placeholders
 26. fix: recycler initial scroll
 27. chore: tweak progress indicator
+28. refactor: group adapter delegates
