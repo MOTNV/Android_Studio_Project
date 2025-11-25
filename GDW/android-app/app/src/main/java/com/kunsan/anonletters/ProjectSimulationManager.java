@@ -54,6 +54,33 @@ public class ProjectSimulationManager {
             }
         });
 
+private static final int VIEW_TYPE_SENT = 1;
+    private static final int VIEW_TYPE_RECEIVED = 2;
+
+    private final List<ChatMessage> messages = new ArrayList<>();
+    private final String currentUserId;
+
+    public ChatAdapter(String currentUserId) {
+        this.currentUserId = currentUserId;
+    }
+
+    public void setMessages(List<ChatMessage> newMessages) {
+        messages.clear();
+        messages.addAll(newMessages);
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        ChatMessage message = messages.get(position);
+        if (message.isSentByMe()) {
+            return VIEW_TYPE_SENT;
+        } else {
+            return VIEW_TYPE_RECEIVED;
+        }
+    }
+
+
     @Override
     protected void onCleared() {
         super.onCleared();
