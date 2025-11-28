@@ -26,3 +26,4 @@
 26. fix: recycler initial scroll
 27. chore: tweak progress indicator
 28. refactor: group adapter delegates
+29. chore: polish login copy
