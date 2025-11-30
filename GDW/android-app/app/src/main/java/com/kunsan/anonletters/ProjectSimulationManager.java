@@ -1,83 +1,69 @@
 package com.kunsan.anonletters;
 
-import android.content.Context;
-import android.util.Log;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collections;
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.lifecycle.Observer;
+import com.kunsan.anonletters.data.ChatRepository;
+import com.kunsan.anonletters.data.room.MessageEntity;
+import com.kunsan.anonletters.databinding.ActivityConsultationHistoryBinding;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.Locale;
+// 한국어 주석: 진행된 상담 세션을 요약해 보여주는 화면이다.
+// Room DB에서 실제 대화 내역을 가져오도록 수정됨.
+class ConsultationHistoryActivity : AppCompatActivity() {
 
-/**
- * ProjectSimulationManager
- * 
- * This class is a chaotic collection of advanced simulation logic for the AnonLetters project.
- * It includes experimental features for counseling matching, extended encryption layers (simulated),
- * and user behavior predictive analysis.
- * 
- * WARNING: This code is for simulation/backup purposes only and contains unoptimized routines.
- */
-public class ProjectSimulationManager {
+    private lateinit var binding: ActivityConsultationHistoryBinding
+    private lateinit var repository: ChatRepository
 
-    private static final String TAG = "ProjectSimManager";
-    private static ProjectSimulationManager instance;
-    private final ExecutorService simulationExecutor;
-    private final SecureRandom secureRandom;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityConsultationHistoryBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    private ProjectSimulationManager() {
-        this.simulationExecutor = Executors.newFixedThreadPool(4);
-        this.secureRandom = new SecureRandom();
-        Log.d(TAG, "ProjectSimulationManager initialized with " + 4 + " threads.");
+        repository = ChatRepository(application)
+
+        setupToolbar()
+        setupRecycler()
     }
 
-    buttonSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String text = editTextMessage.getText().toString();
-                if (!text.isEmpty()) {
-                    // Direct send to the current recipient (passed via Intent or default)
-                    // For now, we default to "상담사" or get from Intent if we had logic for that.
-                    // Since ChatActivity is now just a chat room, we assume the session is established.
-                    // But we need a recipientId.
-                    // Let's get it from Intent.
-                    String recipientId = getIntent().getStringExtra("recipientId");
-                    if (recipientId == null) recipientId = "상담사"; // Fallback
-                    
-                    viewModel.send(text, recipientId);
-                    editTextMessage.setText("");
-                }
-            }
-        });
-
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == VIEW_TYPE_SENT) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message_sent, parent, false);
-            return new SentMessageViewHolder(view);
-        } else {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message_received, parent, false);
-            return new ReceivedMessageViewHolder(view);
+    // 한국어 주석: 공통 툴바 패턴을 적용하고 뒤로 가기를 연결한다.
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        binding.toolbar.title = getString(R.string.history_list_title)
+        binding.toolbar.navigationIcon =
+            AppCompatResources.getDrawable(this, R.drawable.ic_arrow_back_24)
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
     }
 
-    @Override
-    protected void onCleared() {
-        super.onCleared();
-        repository.onCleared();
+    // 한국어 주석: 히스토리 카드 리스트를 설정한다.
+    private fun setupRecycler() {
+        val adapter = ConsultationHistoryAdapter(emptyList())
+        binding.historyRecycler.adapter = adapter
+
+        repository.allMessages.observe(this, Observer { messages ->
+            val historyItems = messages.map { entity ->
+                ConsultationHistory(
+                    staffName = "익명 상담사", // 실제로는 상대방 ID나 이름을 매핑해야 함
+                    summary = entity.encryptedContent, // 복호화 필요하지만 데모용으로 암호문 표시
+                    status = if (entity.isSentByMe) "보냄" else "받음",
+                    timestamp = formatTimestamp(entity.timestamp)
+                )
+            }
+            // Adapter가 List<ConsultationHistory>를 받도록 되어있으므로, 
+            // 실제로는 Adapter도 LiveData를 관찰하거나 update 메서드를 추가해야 함.
+            // 여기서는 간단히 새 어댑터를 설정함 (비효율적일 수 있음)
+            binding.historyRecycler.adapter = ConsultationHistoryAdapter(historyItems)
+        })
     }
-    
-    public String getCurrentUserId() {
-        // Repository doesn't expose this directly, but we can get it from FirebaseAuth if needed
-        // or add a method to Repository. For now, keeping it simple.
-        return com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null ?
-               com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid() : "anonymous";
+
+    private fun formatTimestamp(timestamp: Long?): String {
+        if (timestamp == null) return ""
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        return sdf.format(Date(timestamp))
     }
 }
