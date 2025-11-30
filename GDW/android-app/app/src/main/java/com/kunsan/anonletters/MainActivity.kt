@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         binding.historyButton.text = getString(R.string.history_button_label)
 
         binding.consultButton.setOnClickListener {
-            startActivity(Intent(this, com.kunsan.anonletters.chat.ChatActivity::class.java))
+            startActivity(Intent(this, ConsultationRequestActivity::class.java))
         }
 
         binding.historyButton.setOnClickListener {

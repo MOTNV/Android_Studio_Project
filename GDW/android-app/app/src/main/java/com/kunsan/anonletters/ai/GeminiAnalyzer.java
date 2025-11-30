@@ -31,6 +31,29 @@ public class GeminiAnalyzer {
     }
 
     public void analyzeText(String userText, AnalysisCallback callback) {
+        if ("YOUR_API_KEY".equals(API_KEY)) {
+            // Dummy mode for testing flow without API Key
+            try {
+                JSONObject dummy = new JSONObject();
+                dummy.put("category", "테스트(API키 없음)");
+                dummy.put("sentiment", "일반");
+                dummy.put("recipient", "테스트상담사"); // Single string fallback logic in Repo handles this, or array
+                // Repo expects array or string. Let's put array to be safe if Repo logic is strict, 
+                // but Repo has fallback. Let's use simple string for now as per my plan.
+                // Wait, Repo logic: optJSONArray -> if null -> optString.
+                // So string is fine.
+                
+                // Simulate network delay
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    callback.onSuccess(dummy);
+                }, 1000);
+                return;
+            } catch (Exception e) {
+                callback.onFailure(e);
+                return;
+            }
+        }
+
         String prompt = buildPrompt(userText);
         Content content = new Content.Builder().addText(prompt).build();
 

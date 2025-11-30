@@ -20,6 +20,10 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".ConsultationRequestActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".chat.ChatActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />

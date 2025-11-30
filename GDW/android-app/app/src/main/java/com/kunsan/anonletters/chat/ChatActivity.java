@@ -16,9 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.kunsan.anonletters.R;
 import com.kunsan.anonletters.data.Message;
-import com.kunsan.anonletters.data.AnalysisResult;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+
 import android.widget.Toast;
 import com.kunsan.anonletters.chat.ChatMessage;
 import com.kunsan.anonletters.security.CryptoManager;
@@ -65,21 +63,21 @@ public class ChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String text = editTextMessage.getText().toString();
                 if (!text.isEmpty()) {
-                    // 1. Start Analysis
-                    viewModel.analyze(text);
-                    // Clear input immediately or wait? Let's clear after send for now, 
-                    // but for analysis we might want to keep it until confirmed.
-                    // Keeping it for now.
+                    // Direct send to the current recipient (passed via Intent or default)
+                    // For now, we default to "상담사" or get from Intent if we had logic for that.
+                    // Since ChatActivity is now just a chat room, we assume the session is established.
+                    // But we need a recipientId.
+                    // Let's get it from Intent.
+                    String recipientId = getIntent().getStringExtra("recipientId");
+                    if (recipientId == null) recipientId = "상담사"; // Fallback
+                    
+                    viewModel.send(text, recipientId);
+                    editTextMessage.setText("");
                 }
             }
         });
 
-        // Observe Analysis Result
-        viewModel.getAnalysisResult().observe(this, result -> {
-            if (result != null) {
-                showRecipientSelectionDialog(result);
-            }
-        });
+        // Analysis result observation removed as it's handled in ConsultationRequestActivity
 
         // Observe Sending State
         viewModel.getIsSending().observe(this, isSending -> {
@@ -175,28 +173,5 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    private void showRecipientSelectionDialog(AnalysisResult result) {
-        List<String> recipients = result.getRecommendedRecipients();
-        if (recipients == null || recipients.isEmpty()) {
-            // Fallback
-            viewModel.send(editTextMessage.getText().toString(), "상담사");
-            editTextMessage.setText("");
-            return;
-        }
-
-        String[] recipientArray = recipients.toArray(new String[0]);
-
-        new AlertDialog.Builder(this)
-            .setTitle("추천 상담사 선택 (" + result.getCategory() + ")")
-            .setItems(recipientArray, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    String selectedRecipient = recipientArray[which];
-                    viewModel.send(editTextMessage.getText().toString(), selectedRecipient);
-                    editTextMessage.setText("");
-                }
-            })
-            .setNegativeButton("취소", null)
-            .show();
-    }
+    // showRecipientSelectionDialog removed
 }
