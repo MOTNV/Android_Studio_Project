@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445125957540",
+    "project_id": "androidstudioproject-5f286",
+    "storage_bucket": "androidstudioproject-5f286.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445125957540:android:cdb82af580e3754702d331",
+        "android_client_info": {
+          "package_name": "com.kunsan.anonletters"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_6MvFtvsnbukVonOK0YMOkTxm_F8uHcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
