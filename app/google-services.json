@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "842554627124",
+    "project_id": "ano-message",
+    "storage_bucket": "ano-message.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842554627124:android:a81a6e5357e7151dd32661",
+        "android_client_info": {
+          "package_name": "com.non_breath.finlitrush"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "842554627124-7ao6v2k85gtavlrtvb52648atd3da92k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNw-HiSoPoNRlSt30VN7vBtWlEct9H8p0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "842554627124-7ao6v2k85gtavlrtvb52648atd3da92k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

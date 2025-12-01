@@ -5,6 +5,13 @@
   "tileheight": 16,
   "layers": [
     {
+      "type": "imagelayer",
+      "name": "city-bg",
+      "image": "maps/city_bg.png",
+      "offsetx": 0,
+      "offsety": 0
+    },
+    {
       "type": "tilelayer",
       "name": "ground",
       "data": [
@@ -53,14 +60,16 @@
       ]
     }
   ],
+  "warps": [
+    { "col": 14, "row": 8, "target": "maps/demo_map.json", "targetCol": 2, "targetRow": 2 }
+  ],
   "tilesets": [
     {
       "firstgid": 1,
-      "columns": 2,
+      "columns": 8,
       "tilewidth": 16,
       "tileheight": 16,
-      "colors": ["#E6E6E6", "#888888"]
+      "image": "tiles/overworld.png"
     }
   ]
 }
-

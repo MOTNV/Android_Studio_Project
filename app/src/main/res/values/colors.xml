@@ -1,5 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Primary Colors - Soft Pastel Blue/Purple -->
+    <color name="primary">#9B87F5</color>
+    <color name="primaryVariant">#7E69E6</color>
+    <color name="primaryLight">#B9A9F5</color>
+
+    <!-- Background & Surface - Warm Pastel Tones -->
+    <color name="background">#FFF9F5</color>
+    <color name="surface">#FFFCFA</color>
+    <color name="surfaceVariant">#F7F3F0</color>
+
+    <!-- Text Colors - Softer Dark Tones -->
+    <color name="onSurface">#4A4458</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="subtleText">#9E8FB3</color>
+    <color name="captionText">#BDB4CC</color>
+
+    <!-- Chip Colors - Pastel Variations -->
+    <color name="chipPrimary">#E8E1FC</color>
+    <color name="chipNeutral">#F5F0EB</color>
+    <color name="chipAccent">#FFE4E8</color>
+    <color name="chipBorder">#E6DDD5</color>
+
+    <!-- Chat Bubble Colors - Soft Pastels -->
+    <color name="bubbleOutgoing">#B5A4F5</color>
+    <color name="bubbleIncoming">#F0EBF8</color>
+
+    <!-- Accent Colors - Pastel Versions -->
+    <color name="success">#A8E6CF</color>
+    <color name="warning">#FFD3B6</color>
+    <color name="error">#FFAAA5</color>
+
+    <!-- Divider - Very Soft -->
+    <color name="divider">#EAE0D8</color>
 </resources>

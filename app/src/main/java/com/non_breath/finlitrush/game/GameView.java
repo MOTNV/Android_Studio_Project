@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.graphics.BitmapFactory;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.KeyEvent;
@@ -17,6 +18,8 @@ import android.view.SurfaceView;
 import androidx.core.content.ContextCompat;
 
 import com.non_breath.finlitrush.R;
+import com.non_breath.finlitrush.game.data.MapData;
+import com.non_breath.finlitrush.game.io.MapLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private int[][] map; // 0: floor, 1: wall (legacy single layer)
     private java.util.List<int[][]> tileLayers = new java.util.ArrayList<>();
     private boolean[][] collisionMask = null; // true when blocked
+    // Warps (door/portal)
+    private static class Warp { int col, row; String target; int targetCol, targetRow; }
+    private final java.util.List<Warp> warps = new java.util.ArrayList<>();
+    private float warpCooldown = 0f;
 
     // Player
     private float playerX = 2; // tile coords
@@ -97,11 +104,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private final Paint paintDialogBg = new Paint();
 
     private long lastFrameNanos = 0;
+    private String lastError = null; // for on-screen debug overlay
+    private boolean debugHud = false; private int debugTapCount = 0; private long debugLastTapMs = 0;
 
     // Bitmaps (generated from drawable resources at runtime)
     private Bitmap bmpFloor, bmpWall, bmpNpc;
     private Bitmap bmpPlayerIdle;
     private Bitmap[] bmpPlayerWalk = new Bitmap[2];
+    // Directional frames
+    private static final int DIR_DOWN = 0, DIR_LEFT = 1, DIR_RIGHT = 2, DIR_UP = 3;
+    private int playerDir = DIR_DOWN;
+    private Bitmap[][] playerWalkDir = new Bitmap[4][2];
+    private Bitmap[] playerIdleDir = new Bitmap[4];
+    // NPC directional frames (shared for all NPCs)
+    private Bitmap[][] npcWalkDir = new Bitmap[4][2];
+    private Bitmap[] npcIdleDir = new Bitmap[4];
     private float animTime = 0f;
     private boolean moving = false;
 
@@ -112,6 +129,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     // Atlas (Tiled JSON) support
     private Bitmap atlasBitmap = null;
     private int atlasTileW = 0, atlasTileH = 0, atlasColumns = 0, atlasFirstGid = 1;
+    private final java.util.List<MapData.ImageLayer> imageLayers = new java.util.ArrayList<>();
+
+    private static final String PRIMARY_MAP_ASSET = "maps/tiled_map.json";
+    private static final String FALLBACK_MAP_ASSET = "maps/demo_map.json";
+    private String currentMapAsset = PRIMARY_MAP_ASSET;
 
     public GameView(Context context) {
         super(context);
@@ -146,18 +168,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         paintDialogBg.setColor(Color.argb(220, 255, 255, 255));
 
         // Try Tiled map first; fallback to custom demo
-        if (!loadMapFromAssetsSafe("maps/tiled_map.json") && !loadMapFromAssetsSafe("maps/demo_map.json")) {
+        if (!loadMapFromAssetsSafe(PRIMARY_MAP_ASSET) && !loadMapFromAssetsSafe(FALLBACK_MAP_ASSET)) {
             buildDemoMap();
         }
         // Add few NPCs
-        npcs.add(new Npc(10, 6, "NPC", new String[]{
-                "안녕! 데모 NPC야.",
-                "A 버튼을 눌러 대화를 넘겨봐.",
-                "벽은 회색, 바닥은 밝은 회색이야.",
+                npcs.add(new Npc(10, 6, "NPC", new String[]{
+                "\uC548\uB155! \uB370\uBAA8 NPC\uC57C.",
+                "A \uBC84\uD2BC\uC744 \uB204\uB974\uBA74 \uB300\uD654\uAC00 \uC9C4\uD589\uB429\uB2C8\uB2E4.",
+                "\uBCBD\uC740 \uD68C\uC0C9, \uBC14\uB2E5\uC740 \uBC1D\uC740 \uD68C\uC0C9\uC774\uC57C.",
         }));
-        npcs.add(new Npc(5, 4, "상인", new String[]{
-                "여긴 시험용 맵이야.",
-                "맵과 에셋은 곧 교체 가능!",
+                npcs.add(new Npc(5, 4, "\uC0C1\uC778", new String[]{
+                "\uC5EC\uAE30\uB294 \uC2DC\uD5D8\uC6A9 \uB9F5\uC774\uC57C.",
+                "\uB9F5\uACFC \uC5D0\uC14B\uC740 \uC774\uD6C4 \uAD50\uCCB4 \uAC00\uB2A5!",
         }));
     }
 
@@ -183,6 +205,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) collisionMask[r][c] = map[r][c] != 0;
         }
+        imageLayers.clear();
     }
 
     @Override
@@ -206,6 +229,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     private void createOrUpdateBitmaps() {
+        // recycle old generated bitmaps to save memory
+        // (Bitmaps created from drawables; safe to let GC collect, but recycle proactively)
+        // Note: skipping recycle for atlasBitmap as it's managed from assets decode
+        bmpFloor = null; bmpWall = null; bmpNpc = null; bmpPlayerIdle = null;
+        bmpPlayerWalk[0] = null; bmpPlayerWalk[1] = null;
+
         int tile = Math.max(8, tileSize);
         int sprite = Math.max(8, (int) (tileSize * 0.9f));
         bmpFloor = fromDrawable(R.drawable.tile_floor, tile, tile);
@@ -214,14 +243,67 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         bmpPlayerWalk[0] = fromDrawable(R.drawable.sprite_player_walk1, sprite, sprite);
         bmpPlayerWalk[1] = fromDrawable(R.drawable.sprite_player_walk2, sprite, sprite);
         bmpNpc = fromDrawable(R.drawable.sprite_npc, sprite, sprite);
+
+        // Directional: load if present (falls back silently if missing)
+        // Player
+        int[][] pIds = new int[][]{
+                { getId("sprite_player_down_1"), getId("sprite_player_down_2") },
+                { getId("sprite_player_left_1"), getId("sprite_player_left_2") },
+                { getId("sprite_player_right_1"), getId("sprite_player_right_2") },
+                { getId("sprite_player_up_1"), getId("sprite_player_up_2") }
+        };
+        int[] pIdle = new int[]{
+                getId("sprite_player_down_1"),
+                getId("sprite_player_left_1"),
+                getId("sprite_player_right_1"),
+                getId("sprite_player_up_1")
+        };
+        for (int d = 0; d < 4; d++) {
+            for (int f = 0; f < 2; f++) {
+                playerWalkDir[d][f] = pIds[d][f] != 0 ? fromDrawable(pIds[d][f], sprite, sprite) : null;
+            }
+            playerIdleDir[d] = pIdle[d] != 0 ? fromDrawable(pIdle[d], sprite, sprite) : null;
+        }
+        // NPC
+        int[][] nIds = new int[][]{
+                { getId("sprite_npc_down_1"), getId("sprite_npc_down_2") },
+                { getId("sprite_npc_left_1"), getId("sprite_npc_left_2") },
+                { getId("sprite_npc_right_1"), getId("sprite_npc_right_2") },
+                { getId("sprite_npc_up_1"), getId("sprite_npc_up_2") }
+        };
+        int[] nIdle = new int[]{
+                getId("sprite_npc_down_1"),
+                getId("sprite_npc_left_1"),
+                getId("sprite_npc_right_1"),
+                getId("sprite_npc_up_1")
+        };
+        for (int d = 0; d < 4; d++) {
+            for (int f = 0; f < 2; f++) {
+                npcWalkDir[d][f] = nIds[d][f] != 0 ? fromDrawable(nIds[d][f], sprite, sprite) : null;
+            }
+            npcIdleDir[d] = nIdle[d] != 0 ? fromDrawable(nIdle[d], sprite, sprite) : null;
+        }
+
+        // Attempt to load external sprite sheets (falls back to shapes if missing)
+        if (loadDirectionalSpriteSheet("sprites/heroine.png", playerIdleDir, playerWalkDir)) {
+            bmpPlayerIdle = playerIdleDir[DIR_DOWN];
+        }
+        loadDirectionalSpriteSheet("sprites/villager.png", npcIdleDir, npcWalkDir);
+    }
+
+    private int getId(String name) {
+        if (name == null || name.isEmpty()) return 0;
+        return getResources().getIdentifier(name, "drawable", getContext().getPackageName());
     }
 
     private Bitmap fromDrawable(int resId, int width, int height) {
         Drawable d = ContextCompat.getDrawable(getContext(), resId);
         if (d == null) return null;
-        Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int w = Math.max(1, width);
+        int h = Math.max(1, height);
+        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(b);
-        d.setBounds(0, 0, width, height);
+        d.setBounds(0, 0, w, h);
         d.draw(c);
         return b;
     }
@@ -294,17 +376,33 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         while (running) {
             long now = System.nanoTime();
             float dt = (now - lastFrameNanos) / 1_000_000_000f;
-            if (dt > 0.1f) dt = 0.1f; // clamp to avoid big jumps
+            if (dt > 0.1f) dt = 0.1f;
             lastFrameNanos = now;
 
-            update(dt);
+            try {
+                update(dt);
+            } catch (Throwable t) {
+                android.util.Log.e("GameView", "update() crash", t);
+                lastError = t.getClass().getSimpleName() + ": " + String.valueOf(t.getMessage());
+            }
+
+            SurfaceHolder holder = getHolder();
+            if (holder == null || holder.getSurface() == null || !holder.getSurface().isValid()) {
+                try { Thread.sleep(8); } catch (InterruptedException ignored) {}
+                continue;
+            }
 
             Canvas canvas = null;
             try {
-                canvas = getHolder().lockCanvas();
+                canvas = holder.lockCanvas();
                 if (canvas != null) drawGame(canvas);
+            } catch (Throwable t) {
+                android.util.Log.e("GameView", "draw crash", t);
+                lastError = t.getClass().getSimpleName() + ": " + String.valueOf(t.getMessage());
             } finally {
-                if (canvas != null) getHolder().unlockCanvasAndPost(canvas);
+                try {
+                    if (canvas != null) holder.unlockCanvasAndPost(canvas);
+                } catch (Throwable ignored) {}
             }
         }
     }
@@ -322,9 +420,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             }
             float len = (float) Math.sqrt(dx * dx + dy * dy);
             moving = len > 0.001f;
+            if (moving) {
+                if (Math.abs(dx) >= Math.abs(dy)) {
+                    playerDir = dx >= 0 ? DIR_RIGHT : DIR_LEFT;
+                } else {
+                    playerDir = dy >= 0 ? DIR_DOWN : DIR_UP;
+                }
+            }
             float step = moveSpeedTilesPerSec * dt;
             moveAndCollide(dx * step, dy * step);
             if (moving) animTime += dt; else animTime = 0f;
+            // warp check with small cooldown to avoid loops
+            if (warpCooldown > 0f) warpCooldown -= dt;
+            if (warpCooldown <= 0f) checkAndApplyWarp();
         }
         // update camera to follow player
         updateCamera();
@@ -413,9 +521,64 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         drawPlayer(g);
         drawControls(g);
         if (dialogOpen) drawDialog(g);
+        if (lastError != null) drawErrorOverlay(g, lastError);
+        if (debugHud) drawDebugHud(g);
+    }
+
+    private void drawErrorOverlay(Canvas g, String msg) {
+        int w = getWidth();
+        int pad = Math.max(8, (int)(tileSize * 0.3f));
+        Paint bg = new Paint(); bg.setColor(Color.argb(210, 200, 40, 40));
+        Rect box = new Rect(pad, pad, w - pad, pad + (int)(tileSize * 2.6f));
+        g.drawRect(box, bg);
+        Paint tp = new Paint(paintText);
+        tp.setColor(Color.WHITE);
+        tp.setTextSize(Math.max(22f, tileSize * 0.5f));
+        g.drawText("?¤ë¥ ë°ì: " + msg, box.left + pad, box.top + tp.getTextSize() * 1.1f, tp);
+        g.drawText("?ì¸???´ì©? Logcat ?ì¸", box.left + pad, box.top + tp.getTextSize() * 2.2f, tp);
+    }
+
+    private void drawDebugHud(Canvas g) {
+        int pad = Math.max(8, (int)(tileSize*0.3f));
+        Paint bg = new Paint(); bg.setColor(Color.argb(160, 0, 0, 0));
+        Rect box = new Rect(pad, pad, pad + (int)(tileSize*8), pad + (int)(tileSize*3));
+        g.drawRect(box, bg);
+        Paint tp = new Paint(paintText); tp.setColor(Color.WHITE); tp.setTextSize(Math.max(18f, tileSize*0.45f));
+        int y = box.top + (int)(tp.getTextSize()*1.2f);
+        g.drawText(String.format(java.util.Locale.US, "FPS ~%.0f", fps()), box.left + pad, y, tp); y += tp.getTextSize()*1.2f;
+        g.drawText(String.format(java.util.Locale.US, "Pos %.2f,%.2f tile", playerX, playerY), box.left + pad, y, tp); y += tp.getTextSize()*1.2f;
+        g.drawText(String.format(java.util.Locale.US, "Map %dx%d tile", cols, rows), box.left + pad, y, tp);
+    }
+
+    private void handleDebugTap() {
+        long now = System.currentTimeMillis();
+        if (now - debugLastTapMs < 600) {
+            debugTapCount++;
+        } else {
+            debugTapCount = 1;
+        }
+        debugLastTapMs = now;
+        if (debugTapCount >= 3) {
+            debugTapCount = 0; debugHud = !debugHud;
+        }
+    }
+
+    // crude fps estimation over last frame duration
+    private float fps() {
+        float dt = Math.max(1e-3f, (System.nanoTime() - lastFrameNanos) / 1_000_000_000f);
+        return 1f / dt;
     }
 
     private void drawMap(Canvas g) {
+        // Draw image layers first (if any)
+        if (!imageLayers.isEmpty()) {
+            for (MapData.ImageLayer il : imageLayers) {
+                if (il == null || il.bitmap == null) continue;
+                int x = mapOffsetX + il.offsetX;
+                int y = mapOffsetY + il.offsetY;
+                g.drawBitmap(il.bitmap, x, y, null);
+            }
+        }
         if (tileLayers != null && !tileLayers.isEmpty()) {
             for (int[][] layer : tileLayers) drawLayer(g, layer);
         } else if (map != null) {
@@ -424,29 +587,48 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     private void drawLayer(Canvas g, int[][] layer) {
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
+        if (layer == null) return;
+        // compute visible tile range (camera culling)
+        int viewW = getWidth();
+        int viewH = getHeight();
+        int startC = Math.max(0, (int) Math.floor((-mapOffsetX) / (float) tileSize));
+        int endC = Math.min(cols - 1, (int) Math.floor(((-mapOffsetX) + viewW) / (float) tileSize));
+        int startR = Math.max(0, (int) Math.floor((-mapOffsetY) / (float) tileSize));
+        int endR = Math.min(rows - 1, (int) Math.floor(((-mapOffsetY) + viewH) / (float) tileSize));
+        int maxR = Math.min(rows, layer.length);
+        startR = Math.max(0, Math.min(startR, maxR - 1));
+        endR = Math.max(0, Math.min(endR, maxR - 1));
+        for (int r = startR; r <= endR; r++) {
+            int[] rowArr = layer[r];
+            if (rowArr == null) continue;
+            int maxC = Math.min(cols, rowArr.length);
+            int sC = Math.max(0, Math.min(startC, maxC - 1));
+            int eC = Math.max(0, Math.min(endC, maxC - 1));
+            for (int c = sC; c <= eC; c++) {
                 int left = mapOffsetX + c * tileSize;
                 int top = mapOffsetY + r * tileSize;
                 int right = left + tileSize;
                 int bottom = top + tileSize;
-                int idx = layer[r][c];
+                int idx = rowArr[c];
                 if (atlasBitmap != null && idx != 0) {
                     int gid = idx;
                     int local = gid - atlasFirstGid;
-                    if (local >= 0) {
-                        int sx = (local % atlasColumns) * atlasTileW;
-                        int sy = (local / atlasColumns) * atlasTileH;
+                    int colsAtlas = atlasColumns > 0 ? atlasColumns : (atlasTileW > 0 ? (atlasBitmap.getWidth() / atlasTileW) : 0);
+                    if (colsAtlas <= 0 || atlasTileW <= 0 || atlasTileH <= 0) {
+                        // atlas invalid: draw fallback colors
+                        if (idx == 0) g.drawRect(left, top, right, bottom, paintTile); else g.drawRect(left, top, right, bottom, paintWall);
+                    } else if (local >= 0) {
+                        int sx = (local % colsAtlas) * atlasTileW;
+                        int sy = (local / colsAtlas) * atlasTileH;
                         android.graphics.Rect src = new android.graphics.Rect(sx, sy, sx + atlasTileW, sy + atlasTileH);
                         android.graphics.Rect dst = new android.graphics.Rect(left, top, right, bottom);
                         g.drawBitmap(atlasBitmap, src, dst, null);
                     }
-                } else if (tileBitmaps != null && idx != 0) {
-                    int local = idx;
-                    // If Tiled JSON provided GIDs, convert to local index
-                    if (atlasFirstGid > 0 && idx >= atlasFirstGid) local = idx - atlasFirstGid;
-                    if (local >= 0 && local < tileBitmaps.length && tileBitmaps[local] != null) {
-                        g.drawBitmap(tileBitmaps[local], left, top, null);
+                } else if (tileBitmaps != null) {
+                    if (idx >= 0 && idx < tileBitmaps.length && tileBitmaps[idx] != null) {
+                        g.drawBitmap(tileBitmaps[idx], left, top, null);
+                    } else {
+                        if (idx == 0) g.drawRect(left, top, right, bottom, paintTile); else g.drawRect(left, top, right, bottom, paintWall);
                     }
                 } else {
                     if (idx == 0) {
@@ -465,8 +647,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         float px = mapOffsetX + playerX * tileSize;
         float py = mapOffsetY + playerY * tileSize;
         Bitmap current = null;
-        if (moving && bmpPlayerWalk[0] != null && bmpPlayerWalk[1] != null) {
+        if (moving && playerWalkDir[playerDir][0] != null && playerWalkDir[playerDir][1] != null) {
             int frame = ((int) (animTime * 8f)) % 2; // ~8 fps
+            current = playerWalkDir[playerDir][frame];
+        } else if (playerIdleDir[playerDir] != null) {
+            // subtle idle bob using animTime
+            int frame = ((int) (animTime * 2f)) % 2;
+            current = (frame == 0 ? playerIdleDir[playerDir]
+                    : (playerWalkDir[playerDir][0] != null ? playerWalkDir[playerDir][0] : playerIdleDir[playerDir]));
+        } else if (moving && bmpPlayerWalk[0] != null && bmpPlayerWalk[1] != null) {
+            int frame = ((int) (animTime * 8f)) % 2;
             current = bmpPlayerWalk[frame];
         } else {
             current = bmpPlayerIdle != null ? bmpPlayerIdle : null;
@@ -483,15 +673,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     private void drawNpcs(Canvas g) {
         for (Npc n : npcs) {
-            int size = bmpNpc != null ? bmpNpc.getWidth() : (int) (tileSize * 0.8f);
-            int left = mapOffsetX + Math.round((n.col - 0.5f) * tileSize - size / 2f);
-            int top = mapOffsetY + Math.round((n.row - 0.5f) * tileSize - size / 2f);
-            if (bmpNpc != null) {
+            // face toward player
+            float dx = playerX - n.col;
+            float dy = playerY - n.row;
+            int dir;
+            if (Math.abs(dx) >= Math.abs(dy)) dir = dx >= 0 ? DIR_RIGHT : DIR_LEFT;
+            else dir = dy >= 0 ? DIR_DOWN : DIR_UP;
+
+            Bitmap current = null;
+            int frame = ((int) (animTime * 2f)) % 2; // slow idle bounce
+            if (npcIdleDir[dir] != null || npcWalkDir[dir][0] != null) {
+                current = (frame == 0 ? npcIdleDir[dir]
+                        : (npcWalkDir[dir][0] != null ? npcWalkDir[dir][0] : npcIdleDir[dir]));
+            }
+
+            if (current != null) {
+                int size = current.getWidth();
+                int left = mapOffsetX + Math.round((n.col) * tileSize - size / 2f);
+                int top = mapOffsetY + Math.round((n.row) * tileSize - size / 2f);
+                g.drawBitmap(current, left, top, null);
+            } else if (bmpNpc != null) {
+                int size = bmpNpc.getWidth();
+                int left = mapOffsetX + Math.round(n.col * tileSize - size / 2f);
+                int top = mapOffsetY + Math.round(n.row * tileSize - size / 2f);
                 g.drawBitmap(bmpNpc, left, top, null);
             } else {
-                int right = left + size;
-                int bottom = top + size;
-                g.drawRect(left, top, right, bottom, paintNpc);
+                int size = (int) (tileSize * 0.8f);
+                int left = mapOffsetX + Math.round(n.col * tileSize - size / 2f);
+                int top = mapOffsetY + Math.round(n.row * tileSize - size / 2f);
+                g.drawRect(left, top, left + size, top + size, paintNpc);
             }
         }
     }
@@ -506,10 +716,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             paintText.setColor(Color.WHITE);
             float txtSize = Math.max(28f, tileSize * 0.45f);
             paintText.setTextSize(txtSize);
-            drawCenteredText(g, "▲", btnUp, paintText);
-            drawCenteredText(g, "▼", btnDown, paintText);
-            drawCenteredText(g, "◀", btnLeft, paintText);
-            drawCenteredText(g, "▶", btnRight, paintText);
+            drawCenteredText(g, "\u25B2", btnUp, paintText);
+            drawCenteredText(g, "\u25BC", btnDown, paintText);
+            drawCenteredText(g, "\u25C0", btnLeft, paintText);
+            drawCenteredText(g, "\u25B6", btnRight, paintText);
             paintText.setColor(Color.BLACK);
         } else {
             // Joystick base
@@ -562,7 +772,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         g.drawText(line, box.left + padding, y, bodyPaint);
 
         // Footer: hint and page indicator
-        String hint = (dialogLines != null && dialogIndex < dialogLines.length - 1) ? "A: 다음" : "A: 닫기";
+        String hint = (dialogLines != null && dialogIndex < dialogLines.length - 1) ? "A: \uB2E4\uC74C" : "A: \uB2EB\uAE30";
         Paint hintPaint = new Paint(paintText);
         float hintSize = Math.max(24f, tileSize * 0.45f);
         hintPaint.setTextSize(hintSize);
@@ -587,6 +797,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getActionMasked();
         int pointerIndex = event.getActionIndex();
+        if (pointerIndex < 0 || pointerIndex >= event.getPointerCount()) {
+            pointerIndex = Math.max(0, Math.min(event.getPointerCount() - 1, pointerIndex));
+        }
+        // hidden debug toggle: triple-tap near top-left corner
+        if (action == MotionEvent.ACTION_DOWN) {
+            float x = event.getX(pointerIndex), y = event.getY(pointerIndex);
+            if (x < Math.max(60, tileSize * 1.2f) && y < Math.max(60, tileSize * 1.2f)) {
+                handleDebugTap();
+            }
+        }
         switch (action) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN: {
@@ -728,7 +948,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             dialogOpen = true;
             dialogNpc = target;
             dialogSpeaker = target.name;
-            dialogLines = target.lines;
+            // Defensive: ensure non-null lines to avoid NPE on some devices
+            if (target.lines == null || target.lines.length == 0) {
+                dialogLines = new String[]{"..."};
+            } else {
+                dialogLines = target.lines;
+            }
             dialogIndex = 0;
         }
     }
@@ -743,174 +968,77 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         return null;
     }
 
-    private boolean loadMapFromAssetsSafe(String path) {
+    
+    private boolean loadMapFromAssetsSafe(String assetPath) {
         try {
-            return loadMapFromAssets(path);
-        } catch (Exception ignored) {
-            return false;
+            MapData data = MapLoader.load(getContext(), assetPath);
+            if (applyMap(data)) {
+                currentMapAsset = assetPath;
+                if (getWidth() > 0 && getHeight() > 0) {
+                    createOrUpdateBitmaps();
+                    recreateTileBitmapsIfNeeded();
+                    centerCameraOnPlayer(getWidth(), getHeight(), cols * tileSize, rows * tileSize);
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            android.util.Log.e("GameView", "Failed to load map " + assetPath, e);
         }
+        return false;
     }
 
-    private boolean loadMapFromAssets(String path) throws Exception {
-        Context ctx = getContext();
-        try (java.io.InputStream is = ctx.getAssets().open(path)) {
-            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(is));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) sb.append(line);
-            String json = sb.toString();
+    private boolean applyMap(MapData data) {
+        if (data == null) return false;
+        cols = data.cols > 0 ? data.cols : cols;
+        rows = data.rows > 0 ? data.rows : rows;
 
-            org.json.JSONObject root = new org.json.JSONObject(json);
-            // Tiled JSON detection
-            if (root.has("layers") && root.has("tilesets")) {
-                return parseTiledJson(root);
-            }
-
-            int newCols = root.getInt("cols");
-            int newRows = root.getInt("rows");
-            org.json.JSONArray tiles = root.getJSONArray("tiles");
-            int[][] newMap = new int[newRows][newCols];
-            for (int r = 0; r < newRows; r++) {
-                org.json.JSONArray rowArr = tiles.getJSONArray(r);
-                for (int c = 0; c < newCols; c++) {
-                    newMap[r][c] = rowArr.getInt(c);
-                }
-            }
-
-            // Optional tileset
-            atlasBitmap = null; atlasTileW = atlasTileH = atlasColumns = 0; atlasFirstGid = 1;
-            tileBitmaps = null; tileDrawableNames = null; tilePaletteColors = null;
-            if (root.has("tileset")) {
-                org.json.JSONObject ts = root.getJSONObject("tileset");
-                String type = ts.optString("type", "");
-                if ("android-drawables".equals(type)) {
-                    org.json.JSONArray arr = ts.getJSONArray("drawables");
-                    tileDrawableNames = new String[arr.length()];
-                    for (int i = 0; i < arr.length(); i++) tileDrawableNames[i] = arr.getString(i);
-                    buildTileBitmapsFromDrawables();
-                } else if (ts.has("palette")) {
-                    org.json.JSONArray pal = ts.getJSONArray("palette");
-                    tilePaletteColors = new int[pal.length()];
-                    for (int i = 0; i < pal.length(); i++) tilePaletteColors[i] = android.graphics.Color.parseColor(pal.getString(i));
-                    buildTileBitmapsFromPalette();
-                } else if (ts.has("atlas")) {
-                    org.json.JSONObject a = ts.getJSONObject("atlas");
-                    String imagePath = a.getString("image");
-                    atlasTileW = a.getInt("tileW");
-                    atlasTileH = a.getInt("tileH");
-                    atlasColumns = a.getInt("columns");
-                    atlasFirstGid = a.optInt("firstgid", 1);
-                    try (java.io.InputStream ais = ctx.getAssets().open(imagePath)) {
-                        atlasBitmap = android.graphics.BitmapFactory.decodeStream(ais);
-                    }
-                }
-            }
-
-            // player
-            if (root.has("player")) {
-                org.json.JSONObject p = root.getJSONObject("player");
-                playerX = (float) p.optDouble("col", 2);
-                playerY = (float) p.optDouble("row", 2);
-            }
-
-            // npcs
-            npcs.clear();
-            if (root.has("npcs")) {
-                org.json.JSONArray arr = root.getJSONArray("npcs");
-                for (int i = 0; i < arr.length(); i++) {
-                    org.json.JSONObject n = arr.getJSONObject(i);
-                    int col = n.getInt("col");
-                    int row = n.getInt("row");
-                    String name = n.optString("name", "NPC");
-                    org.json.JSONArray linesArr = n.optJSONArray("lines");
-                    String[] ls;
-                    if (linesArr != null) {
-                        ls = new String[linesArr.length()];
-                        for (int j = 0; j < linesArr.length(); j++) ls[j] = linesArr.getString(j);
-                    } else {
-                        ls = new String[]{"..."};
-                    }
-                    npcs.add(new Npc(col, row, name, ls));
-                }
-            }
-
-            // apply
-            cols = newCols;
-            rows = newRows;
-            map = newMap;
-            // layers
-            tileLayers.clear();
-            tileLayers.add(map);
-            // default collision from non-zero tiles
-            collisionMask = new boolean[rows][cols];
-            for (int r = 0; r < rows; r++) {
-                for (int c = 0; c < cols; c++) collisionMask[r][c] = map[r][c] != 0;
-            }
-            // optional custom collision matrix (0/1)
-            if (root.has("collision")) {
-                org.json.JSONArray coll = root.getJSONArray("collision");
-                for (int r = 0; r < rows; r++) {
-                    org.json.JSONArray rowArr = coll.getJSONArray(r);
-                    for (int c = 0; c < cols; c++) collisionMask[r][c] = rowArr.getInt(c) != 0;
-                }
-            }
-            return true;
+        tileLayers.clear();
+        if (data.tileLayers != null && !data.tileLayers.isEmpty()) {
+            tileLayers.addAll(data.tileLayers);
+            map = tileLayers.get(0);
+        } else {
+            map = null;
         }
-    }
 
-    private boolean parseTiledJson(org.json.JSONObject root) throws Exception {
-        int newCols = root.getInt("width");
-        int newRows = root.getInt("height");
-        int tw = root.getInt("tilewidth");
-        int th = root.getInt("tileheight");
-        org.json.JSONArray layers = root.getJSONArray("layers");
-        java.util.List<int[][]> draw = new java.util.ArrayList<>();
-        boolean[][] coll = new boolean[newRows][newCols];
-        for (int i = 0; i < layers.length(); i++) {
-            org.json.JSONObject layer = layers.getJSONObject(i);
-            if (!"tilelayer".equals(layer.optString("type"))) continue;
-            org.json.JSONArray data = layer.getJSONArray("data");
-            int[][] grid = new int[newRows][newCols];
-            for (int r = 0; r < newRows; r++) {
-                for (int c = 0; c < newCols; c++) grid[r][c] = data.getInt(r * newCols + c);
-            }
-            String name = layer.optString("name", "");
-            boolean isCollision = name.equalsIgnoreCase("collision") || name.equalsIgnoreCase("collide");
-            if (isCollision) {
-                for (int r = 0; r < newRows; r++) {
-                    for (int c = 0; c < newCols; c++) coll[r][c] = coll[r][c] || grid[r][c] != 0;
-                }
-            } else {
-                draw.add(grid);
+        collisionMask = data.collision != null ? data.collision : new boolean[rows][cols];
+
+        tileDrawableNames = data.tileDrawableNames;
+        tilePaletteColors = data.tilePaletteColors;
+        atlasBitmap = data.atlasBitmap;
+        atlasColumns = data.atlasColumns;
+        atlasTileW = data.atlasTileW;
+        atlasTileH = data.atlasTileH;
+        atlasFirstGid = data.atlasFirstGid;
+
+        imageLayers.clear();
+        if (data.imageLayers != null && !data.imageLayers.isEmpty()) {
+            imageLayers.addAll(data.imageLayers);
+        }
+
+        npcs.clear();
+        if (data.npcs != null) {
+            for (MapData.Npc npcData : data.npcs) {
+                npcs.add(new Npc(npcData.col, npcData.row, npcData.name, npcData.lines));
             }
         }
-        org.json.JSONArray tilesets = root.getJSONArray("tilesets");
-        org.json.JSONObject ts0 = tilesets.getJSONObject(0);
-        atlasFirstGid = ts0.getInt("firstgid");
-        atlasColumns = ts0.optInt("columns", 0);
-        atlasTileW = ts0.optInt("tilewidth", tw);
-        atlasTileH = ts0.optInt("tileheight", th);
-        tileBitmaps = null; tileDrawableNames = null; tilePaletteColors = null; atlasBitmap = null;
-        // Prefer inline base64 if provided
-        if (ts0.has("imageBase64")) {
-            String b64 = ts0.getString("imageBase64");
-            byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
-            atlasBitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        } else if (ts0.has("colors")) {
-            org.json.JSONArray pal = ts0.getJSONArray("colors");
-            tilePaletteColors = new int[pal.length()];
-            for (int i = 0; i < pal.length(); i++) tilePaletteColors[i] = android.graphics.Color.parseColor(pal.getString(i));
-            buildTileBitmapsFromPalette();
-        } else if (ts0.has("image")) {
-            String image = ts0.getString("image");
-            Context ctx2 = getContext();
-            try (java.io.InputStream ais = ctx2.getAssets().open(image)) {
-                atlasBitmap = android.graphics.BitmapFactory.decodeStream(ais);
+
+        warps.clear();
+        if (data.warps != null) {
+            for (MapData.Warp w : data.warps) {
+                Warp copy = new Warp();
+                copy.col = w.col;
+                copy.row = w.row;
+                copy.target = w.target;
+                copy.targetCol = w.targetCol;
+                copy.targetRow = w.targetRow;
+                warps.add(copy);
             }
         }
-        cols = newCols; rows = newRows; map = null;
-        tileLayers.clear(); tileLayers.addAll(draw);
-        collisionMask = coll;
+
+        if (data.playerCol >= 0 && data.playerRow >= 0) {
+            playerX = data.playerCol;
+            playerY = data.playerRow;
+        }
         return true;
     }
 
@@ -942,4 +1070,86 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (tileDrawableNames != null) buildTileBitmapsFromDrawables();
         else if (tilePaletteColors != null) buildTileBitmapsFromPalette();
     }
+
+    private boolean loadDirectionalSpriteSheet(String assetPath, Bitmap[] idleOut, Bitmap[][] walkOut) {
+        try (java.io.InputStream is = getContext().getAssets().open(assetPath)) {
+            Bitmap sheet = BitmapFactory.decodeStream(is);
+            if (sheet == null) return false;
+            final int columns = 4;
+            final int rows = Math.min(4, sheet.getHeight() / Math.max(1, sheet.getHeight() / 4));
+            int cellW = sheet.getWidth() / columns;
+            int cellH = sheet.getHeight() / rows;
+            int idleFrame = 0;
+            int walkFrameA = Math.min(1, columns - 1);
+            int walkFrameB = Math.min(2, columns - 1);
+            for (int dir = 0; dir < 4 && dir < rows; dir++) {
+                idleOut[dir] = trimSpriteFrame(Bitmap.createBitmap(sheet, idleFrame * cellW, dir * cellH, cellW, cellH));
+                walkOut[dir][0] = trimSpriteFrame(Bitmap.createBitmap(sheet, walkFrameA * cellW, dir * cellH, cellW, cellH));
+                walkOut[dir][1] = trimSpriteFrame(Bitmap.createBitmap(sheet, walkFrameB * cellW, dir * cellH, cellW, cellH));
+            }
+            return true;
+        } catch (Exception e) {
+            android.util.Log.w("GameView", "Sprite sheet not found: " + assetPath);
+            return false;
+        }
+    }
+
+    private Bitmap trimSpriteFrame(Bitmap frame) {
+        if (frame == null) return null;
+        Rect bounds = findOpaqueBounds(frame, 8);
+        return Bitmap.createBitmap(frame, bounds.left, bounds.top, Math.max(1, bounds.width()), Math.max(1, bounds.height()));
+    }
+
+    private Rect findOpaqueBounds(Bitmap bmp, int alphaThreshold) {
+        int w = bmp.getWidth();
+        int h = bmp.getHeight();
+        int minX = w, minY = h, maxX = -1, maxY = -1;
+        int[] pixels = new int[w * h];
+        bmp.getPixels(pixels, 0, w, 0, 0, w, h);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int a = (pixels[y * w + x] >>> 24) & 0xFF;
+                if (a > alphaThreshold) {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) return new Rect(0, 0, w, h);
+        int pad = Math.max(1, Math.round(Math.min(w, h) * 0.05f));
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(w - 1, maxX + pad);
+        maxY = Math.min(h - 1, maxY + pad);
+        return new Rect(minX, minY, maxX + 1, maxY + 1);
+    }
+
+    private void checkAndApplyWarp() {
+        if (warps.isEmpty()) return;
+        int pc = Math.round(playerX);
+        int pr = Math.round(playerY);
+        for (Warp w : warps) {
+            if (w.col == pc && w.row == pr) {
+                boolean loaded = true;
+                if (w.target != null && !w.target.isEmpty()) {
+                    loaded = loadMapFromAssetsSafe(w.target);
+                }
+                // position after warp (either in current or new map)
+                playerX = w.targetCol; playerY = w.targetRow;
+                // refresh camera/bitmaps (view size unchanged)
+                int viewW = getWidth();
+                int viewH = getHeight();
+                int mapW = cols * tileSize;
+                int mapH = rows * tileSize;
+                centerCameraOnPlayer(viewW, viewH, mapW, mapH);
+                createOrUpdateBitmaps();
+                recreateTileBitmapsIfNeeded();
+                warpCooldown = 0.5f;
+                break;
+            }
+        }
+    }
 }
+
