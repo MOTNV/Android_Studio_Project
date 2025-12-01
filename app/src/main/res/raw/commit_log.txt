@@ -27,3 +27,4 @@
 27. chore: tweak progress indicator
 28. refactor: group adapter delegates
 29. chore: polish login copy
+30. fix: guard empty intents
